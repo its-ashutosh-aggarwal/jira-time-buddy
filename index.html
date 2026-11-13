@@ -1,51 +1,538 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Jira Time Buddy</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
-      background: #f4f6fa;
-      margin: 0;
-      color: #172b4d;
-    }
-    main {
-      max-width: 760px;
-      margin: 70px auto;
-      padding: 30px;
-    }
-    .card {
-      background: white;
-      padding: 28px;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px #172b4d12;
-    }
-    h1 { color: #2563eb; }
-    button {
-      background: #2563eb;
-      color: white;
-      border: 0;
-      padding: 13px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jira Time Buddy | Team Edition</title>
+<style>
+/* Styling will be added in Part 2 */
+</style>
 </head>
 <body>
-  <main>
-    <div class="card">
-      <h1>Jira Time Buddy</h1>
-      <p>Never forget to log an unplanned client call again.</p>
-      <h2>Your smart worklog assistant</h2>
-      <p>We're building a simple way to capture Microsoft Teams
-      client calls and submit accurate worklogs to Jira.</p>
-      <button onclick="alert('Jira integration coming soon!')">
-        Get started
-      </button>
-      <p><small>Version 0.1 · Initial prototype</small></p>
-    </div>
-  </main>
+<div class="layout">
+   <aside class="sidebar">
+      <div class="brand">◷ Jira Time Buddy</div>
+      <p class="nav-label">WORKSPACE</p>
+      <button class="nav active" data-page="overview">Overview</button>
+      <button class="nav" data-page="calls">Call inbox</button>
+      <button class="nav" data-page="team">Team monitoring</button>
+      <button class="nav" data-page="history">Worklog history</button>
+      <p class="nav-label">SETTINGS</p>
+      <button class="nav" data-page="about">About & integrations</button>
+      <div class="sidebar-foot">DEMO ENVIRONMENT<br>Sample data only</div>
+   </aside>
+   <main class="main">
+      <header class="topbar">
+         <strong id="pageTitle">Overview</strong>
+         <div>
+            <label for="role">View as:</label>
+            <select id="role">
+               <option value="manager">Manager</option>
+               <option value="employee">Employee</option>
+            </select>
+         </div>
+      </header>
+      <div class="content">
+         <section class="section active" id="overview">
+            <p class="eyebrow">WORKSPACE / OVERVIEW</p>
+            <h1 id="greeting">Team overview</h1>
+            <p class="subtitle">Your team's client calls and worklog activity.</p>
+            <div class="metrics" id="metrics"></div>
+            <div class="notice">
+               Demo mode: all figures are sample data.
+            </div>
+            <div class="panel">
+               <h3>Recent call activity</h3>
+               <div class="table-wrap">
+                  <table>
+                     <thead>
+                        <tr>
+                           <th>Employee</th>
+                           <th>Client / Meeting</th>
+                           <th>Duration</th>
+                           <th>Jira issue</th>
+                           <th>Status</th>
+                        </tr>
+                     </thead>
+                     <tbody id="recentRows"></tbody>
+                  </table>
+               </div>
+            </div>
+         </section>
+         <section class="section" id="calls">
+            <p class="eyebrow">WORKSPACE / CALL INBOX</p>
+            <h1>Call inbox</h1>
+            <p class="subtitle">Review detected calls and prepare Jira worklogs.</p>
+            <input id="callSearch" placeholder="Search calls..." />
+            <div class="callcards" id="callCards"></div>
+         </section>
+         <section class="section" id="team">
+            <p class="eyebrow">WORKSPACE / TEAM MONITORING</p>
+            <h1>Team monitoring</h1>
+            <p class="subtitle">Review client calls and worklog status.</p>
+            <input id="teamSearch" placeholder="Search employee or client..." />
+            <select id="statusFilter">
+               <option value="all">All statuses</option>
+               <option value="Pending">Pending</option>
+               <option value="Logged">Logged</option>
+            </select>
+            <div class="panel table-wrap">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Employee</th>
+                        <th>Client / Meeting</th>
+                        <th>Duration</th>
+                        <th>Jira issue</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                     </tr>
+                  </thead>
+                  <tbody id="teamRows"></tbody>
+               </table>
+            </div>
+         </section>
+         <section class="section" id="history">
+            <p class="eyebrow">WORKSPACE / HISTORY</p>
+            <h1>Worklog history</h1>
+            <p class="subtitle">Your submitted worklogs.</p>
+            <div class="panel table-wrap">
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Employee</th>
+                        <th>Client</th>
+                        <th>Jira issue</th>
+                        <th>Duration</th>
+                        <th>Description</th>
+                     </tr>
+                  </thead>
+                  <tbody id="historyRows"></tbody>
+               </table>
+            </div>
+         </section>
+         <section class="section" id="about">
+            <p class="eyebrow">SETTINGS / INTEGRATIONS</p>
+            <h1>About & integrations</h1>
+            <div class="panel">
+               <h3>Application status</h3>
+               <p>Frontend: Available</p>
+               <p>Microsoft Teams: Not connected</p>
+               <p>Jira Cloud: Not connected</p>
+               <p>Authentication: Not configured</p>
+               <p>No real Teams or Jira data is being accessed.</p>
+            </div>
+         </section>
+      </div>
+   </main>
+</div>
+<div class="modal-bg" id="modal">
+   <div class="modal">
+      <h2>Review worklog</h2>
+      <p id="modalCall"></p>
+      <form id="worklogForm">
+         <label>Jira issue key</label>
+         <input id="issue" required placeholder="CLIENT-123">
+         <label>Time spent</label>
+         <input id="duration" required>
+         <label>Description</label>
+         <input id="description" required
+            value="Unplanned client discussion via Teams">
+         <div class="modal-actions">
+            <button type="button" onclick="closeModal()">Cancel</button>
+            <button type="submit">Save demo worklog</button>
+         </div>
+      </form>
+   </div>
+</div>
+<style>
+:root {
+   --blue:#315bea;
+   --ink:#17233b;
+   --muted:#718096;
+   --bg:#f5f7fb;
+   --line:#e7ebf2;
+   --green:#16865c;
+}
+* { box-sizing:border-box; }
+body {
+   margin:0;
+   background:var(--bg);
+   color:var(--ink);
+   font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+button,input,select { font:inherit; }
+button { cursor:pointer; }
+.layout { display:flex; min-height:100vh; }
+.sidebar {
+   width:235px;
+   background:white;
+   border-right:1px solid var(--line);
+   padding:25px 17px;
+   flex-shrink:0;
+}
+.brand {
+   font-weight:750;
+   font-size:19px;
+   margin:5px 5px 38px;
+   color:var(--blue);
+}
+.nav-label {
+   font-size:10px;
+   color:#9aa5b5;
+   font-weight:700;
+   letter-spacing:1px;
+   margin:22px 0 9px;
+}
+.nav {
+   display:block;
+   width:100%;
+   text-align:left;
+   border:0;
+   background:transparent;
+   padding:12px;
+   border-radius:9px;
+   color:#637087;
+   margin:3px 0;
+}
+.nav.active {
+   background:#edf2ff;
+   color:var(--blue);
+   font-weight:650;
+}
+.nav:hover { background:#f3f5fa; }
+.sidebar-foot {
+   margin-top:55px;
+   padding:13px;
+   background:#f6f8fc;
+   border-radius:10px;
+   color:var(--muted);
+   font-size:12px;
+}
+.main { flex:1; min-width:0; }
+.topbar {
+   height:70px;
+   background:white;
+   border-bottom:1px solid var(--line);
+   display:flex;
+   align-items:center;
+   justify-content:space-between;
+   padding:0 32px;
+}
+.topbar select { margin-left:10px; }
+.content {
+   max-width:1450px;
+   margin:auto;
+   padding:32px;
+}
+.eyebrow { color:var(--muted); font-size:11px; }
+h1 { font-size:27px; margin:9px 0; }
+.subtitle { color:var(--muted); margin-bottom:25px; }
+.metrics {
+   display:grid;
+   grid-template-columns:repeat(4,minmax(0,1fr));
+   gap:15px;
+}
+.metric,.panel {
+   background:white;
+   border:1px solid var(--line);
+   border-radius:12px;
+   padding:19px;
+}
+.metric { min-width:0; }
+.metric-title { color:var(--muted); font-size:12px; }
+.metric-value { font-size:29px; font-weight:750; margin:15px 0 5px; }
+.metric-note { color:var(--muted); font-size:11px; }
+.notice {
+   background:#eef4ff;
+   color:#36549b;
+   padding:13px;
+   border-radius:9px;
+   margin:20px 0;
+   font-size:12px;
+}
+.panel { margin-top:20px; padding:19px; }
+.panel h3 { margin:0 0 16px; }
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; text-align:left; }
+th {
+   background:#fafbfe;
+   color:#8290a4;
+   font-size:10px;
+   text-transform:uppercase;
+   letter-spacing:.6px;
+}
+td,th {
+   padding:14px 12px;
+   border-bottom:1px solid #edf0f5;
+   white-space:nowrap;
+}
+td { font-size:12px; }
+.pill {
+   display:inline-block;
+   padding:5px 9px;
+   border-radius:20px;
+   font-size:10px;
+   font-weight:700;
+}
+.pending { background:#fff4df; color:#a66b12; }
+.logged { background:#e5f6ed; color:#14764e; }
+.action {
+   color:var(--blue);
+   font-weight:650;
+   background:none;
+   border:0;
+}
+.section { display:none; }
+.section.active { display:block; }
+.callcards {
+   display:grid;
+   grid-template-columns:repeat(2,minmax(0,1fr));
+   gap:14px;
+   margin-top:18px;
+}
+.callcard {
+   background:white;
+   border:1px solid var(--line);
+   border-radius:11px;
+   padding:18px;
+}
+.callcard h3 { margin:0 0 8px; }
+.callcard p { color:var(--muted); font-size:12px; }
+input,select {
+   border:1px solid var(--line);
+   background:white;
+   border-radius:8px;
+   padding:11px 12px;
+   color:var(--ink);
+}
+input { max-width:100%; }
+.modal-bg {
+   position:fixed;
+   inset:0;
+   background:#101a2b80;
+   display:none;
+   align-items:center;
+   justify-content:center;
+   padding:15px;
+   z-index:5;
+}
+.modal-bg.open { display:flex; }
+.modal {
+   background:white;
+   border-radius:15px;
+   padding:25px;
+   width:100%;
+   max-width:460px;
+}
+.modal h2 { margin-top:0; }
+.modal label {
+   display:block;
+   font-size:12px;
+   font-weight:650;
+   margin:15px 0 7px;
+}
+.modal input { width:100%; }
+.modal-actions {
+   display:flex;
+   justify-content:flex-end;
+   gap:10px;
+   margin-top:22px;
+}
+.modal button {
+   border:1px solid var(--line);
+   border-radius:8px;
+   padding:10px 14px;
+   background:white;
+}
+.modal button[type=submit] {
+   background:var(--blue);
+   color:white;
+}
+@media(max-width:900px) {
+   .metrics { grid-template-columns:repeat(2,1fr); }
+   .content { padding:22px; }
+}
+@media(max-width:650px) {
+   .sidebar { width:145px; padding:15px 8px; }
+   .brand { font-size:15px; }
+   .nav { font-size:11px; padding:10px 6px; }
+   .content { padding:15px; }
+   .topbar { padding:0 12px; }
+   .callcards { grid-template-columns:1fr; }
+   .metrics { gap:8px; }
+   .metric { padding:12px; }
+   .metric-value { font-size:23px; }
+}
+</style>
+<script>
+const calls = [
+  {id:1,employee:"Ashutosh Aggarwal",client:"Client Alpha",meeting:"Production support discussion",time:"10:15 AM",duration:"27m",issue:"CLIENT-123",status:"Pending"},
+  {id:2,employee:"Rahul Sharma",client:"Client Beta",meeting:"Requirement clarification",time:"11:05 AM",duration:"33m",issue:"SUPPORT-456",status:"Logged"},
+  {id:3,employee:"Priya Singh",client:"Client Gamma",meeting:"Technical clarification",time:"12:20 PM",duration:"18m",issue:"",status:"Pending"},
+  {id:4,employee:"Ashutosh Aggarwal",client:"Client Delta",meeting:"Deployment follow-up",time:"1:10 PM",duration:"42m",issue:"PROJ-789",status:"Logged"},
+  {id:5,employee:"Rahul Sharma",client:"Client Alpha",meeting:"Incident review",time:"2:30 PM",duration:"16m",issue:"",status:"Pending"},
+  {id:6,employee:"Priya Singh",client:"Client Beta",meeting:"Integration discussion",time:"3:05 PM",duration:"24m",issue:"SUPPORT-456",status:"Logged"}
+];
+let history = [];
+let selected = null;
+let role = "manager";
+function statusBadge(s) {
+  return `<span class="pill ${s==="Logged"?"logged":"pending"}">${s}</span>`;
+}
+function navigate(page) {
+  document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
+  document.getElementById(page).classList.add("active");
+  document.querySelectorAll(".nav").forEach(n=>{
+   n.classList.toggle("active",n.dataset.page===page);
+  });
+  const titles = {
+   overview:"Overview",
+   calls:"Call inbox",
+   team:"Team monitoring",
+   history:"Worklog history",
+   about:"About & integrations"
+  };
+  document.getElementById("pageTitle").textContent=titles[page];
+  render();
+}
+document.querySelectorAll(".nav").forEach(n=>{
+  n.addEventListener("click",()=>navigate(n.dataset.page));
+});
+document.getElementById("role").addEventListener("change",e=>{
+  role=e.target.value;
+  document.getElementById("greeting").textContent=
+   role==="manager"?"Team overview":"My worklog overview";
+  render();
+});
+function openModal(id) {
+  selected=calls.find(c=>c.id===id);
+  if(!selected)return;
+  document.getElementById("modalCall").textContent=
+   selected.client+" · "+selected.meeting+" · "+selected.duration;
+  document.getElementById("issue").value=selected.issue;
+  document.getElementById("duration").value=selected.duration;
+  document.getElementById("modal").classList.add("open");
+}
+function closeModal() {
+  document.getElementById("modal").classList.remove("open");
+}
+document.getElementById("worklogForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  if(!selected)return;
+  if(selected.status==="Logged") {
+   alert("This call is already logged.");
+   return;
+  }
+  const issue=document.getElementById("issue").value.trim().toUpperCase();
+  if(!/^[A-Z][A-Z0-9_]*-\d+$/.test(issue)) {
+   alert("Enter a valid Jira issue key, e.g. CLIENT-123.");
+   return;
+  }
+  const entry={
+   ...selected,
+   issue,
+   duration:document.getElementById("duration").value,
+   description:document.getElementById("description").value,
+   status:"Logged"
+  };
+  selected.status="Logged";
+  selected.issue=issue;
+  selected.duration=entry.duration;
+  history.unshift(entry);
+  closeModal();
+  render();
+  navigate("history");
+  alert("Demo worklog saved in this browser session only. Jira was not contacted.");
+});
+function render() {
+  const visible=role==="manager"
+   ?calls
+   :calls.filter(c=>c.employee==="Ashutosh Aggarwal");
+  const logged=visible.filter(c=>c.status==="Logged").length;
+  const pending=visible.length-logged;
+  const total=visible.reduce((n,c)=>n+parseInt(c.duration),0);
+  const metrics=[
+   ["Client calls",visible.length,"Sample detected calls"],
+   ["Time captured",total+"m","Total sample duration"],
+   ["Pending worklogs",pending,"Awaiting review"],
+   ["Logged worklogs",logged,"Completed sample entries"]
+  ];
+  document.getElementById("metrics").innerHTML=metrics.map(m=>`
+   <div class="metric">
+     <div class="metric-title">${m[0]}</div>
+     <div class="metric-value">${m[1]}</div>
+     <div class="metric-note">${m[2]}</div>
+   </div>
+  `).join("");
+  document.getElementById("recentRows").innerHTML=
+   visible.slice(0,5).map(c=>`
+     <tr>
+      <td>${c.employee}</td>
+      <td>${c.client}<br>${c.meeting}</td>
+      <td>${c.duration}</td>
+      <td>${c.issue||"—"}</td>
+      <td>${statusBadge(c.status)}</td>
+     </tr>
+   `).join("");
+  const callSearch=(document.getElementById("callSearch")?.value||"").toLowerCase();
+  document.getElementById("callCards").innerHTML=
+   visible.filter(c=>(c.client+" "+c.meeting).toLowerCase().includes(callSearch))
+   .map(c=>`
+     <div class="callcard">
+      <h3>${c.client}</h3>
+      <p>${c.meeting}</p>
+      <p>${c.employee} · ${c.time}</p>
+      <p><strong>${c.duration}</strong> · ${c.issue||"No Jira issue assigned"}</p>
+      ${statusBadge(c.status)}
+      <p>
+        <button class="action" onclick="openModal(${c.id})"
+         ${c.status==="Logged"?"disabled":""}>
+         ${c.status==="Logged"?"Already logged":"Review worklog →"}
+        </button>
+      </p>
+     </div>
+   `).join("")||"<p>No matching calls.</p>";
+  const search=(document.getElementById("teamSearch")?.value||"").toLowerCase();
+  const filter=document.getElementById("statusFilter")?.value||"all";
+  document.getElementById("teamRows").innerHTML=
+   visible.filter(c=>
+     (c.employee+" "+c.client+" "+c.meeting+" "+c.issue).toLowerCase().includes(search)
+     &&(filter==="all"||c.status===filter)
+   ).map(c=>`
+     <tr>
+      <td>${c.employee}</td>
+      <td>${c.client}<br>${c.meeting}</td>
+      <td>${c.duration}</td>
+      <td>${c.issue||"—"}</td>
+      <td>${statusBadge(c.status)}</td>
+      <td>${c.status==="Pending"
+        ?`<button class="action" onclick="openModal(${c.id})">Review</button>`
+        :"—"}
+      </td>
+     </tr>
+   `).join("");
+  document.querySelector('[data-page="team"]').style.display=
+   role==="manager"?"block":"none";
+  const hist=role==="manager"
+   ?history
+   :history.filter(c=>c.employee==="Ashutosh Aggarwal");
+  document.getElementById("historyRows").innerHTML=
+   hist.map(c=>`
+     <tr>
+      <td>${c.employee}</td>
+      <td>${c.client}</td>
+      <td>${c.issue}</td>
+      <td>${c.duration}</td>
+      <td>${c.description}</td>
+     </tr>
+   `).join("")||
+   '<tr><td colspan="5">No worklogs submitted in this demo session.</td></tr>';
+}
+document.getElementById("callSearch").addEventListener("input",render);
+document.getElementById("teamSearch").addEventListener("input",render);
+document.getElementById("statusFilter").addEventListener("change",render);
+render();
+</script>
 </body>
 </html>
